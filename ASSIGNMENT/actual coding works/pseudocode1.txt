@@ -1,0 +1,159 @@
+STRUCT ConfusionMatrix
+    tp, tn, fp, fn
+
+STRUCT AccuracyResult
+    correctPredictions, totalPredictions
+
+// Initialize Global Variables
+screen_width <- 600
+screen_height <- 600
+grid_size <- 3
+cell_size <- screen_width / grid_size
+current_difficulty <- MEDIUM
+game_state <- MENU
+is_two_player <- false
+scroll_y <- 0
+scroll_speed <- 20
+
+// Main Program
+
+Initialize_Window(screen_width, screen_height, "Tic-Tac-Toe")
+
+BEGIN
+    WHILE NOT WindowShouldClose()
+        SWITCH game_state
+            CASE MENU:
+                IF MouseButtonPressed(LEFT)
+                    GET mouse_position
+                    IF clicked_single_player
+                        is_two_player = false
+                        game_state = DIFFICULTY_SELECT
+                    ELSE IF clicked_two_player
+                        is_two_player = true
+                        game_state = GAME
+                        InitGame()
+                    ELSE IF clicked_ai_analysis
+                        LoadAndEvaluateDataset()
+                        game_state = AI_ANALYSIS
+                
+            CASE DIFFICULTY_SELECT:
+                IF MouseButtonPressed(LEFT)
+                    GET mouse_position
+                    IF clicked_easy
+                        current_difficulty = EASY
+                    ELSE IF clicked_medium
+                        current_difficulty = MEDIUM
+                    ELSE IF clicked_hard
+                        current_difficulty = HARD
+                    game_state = GAME
+                    InitGame()
+                
+            CASE GAME:
+                IF NOT game_over
+                    IF current_turn = PLAYER_X
+                        HandlePlayerTurn()
+                    ELSE
+                        IF is_two_player
+                            HandlePlayerTurn()
+                        ELSE
+                            AITurn()
+                
+            CASE GAME_OVER:
+                IF MouseButtonPressed(LEFT)
+                    IF clicked_menu
+                        game_state = MENU
+                    ELSE IF clicked_retry
+                        game_state = GAME
+                        InitGame()
+                
+            CASE AI_ANALYSIS:
+                Handle_Scrolling()
+                IF clicked_back
+                    game_state = MENU
+        
+        // Drawing Functions
+        BeginDrawing()
+            ClearBackground(WHITE)
+            
+            SWITCH game_state
+                CASE MENU:
+                    DrawMenu()
+                CASE DIFFICULTY_SELECT:
+                    DrawDifficultySelect()
+                CASE GAME:
+                    DrawGame()
+                CASE GAME_OVER:
+                    DrawGame()
+                    DrawGameOver()
+                CASE AI_ANALYSIS:
+                    DrawAIAnalysis()
+            
+        EndDrawing()
+    ENDWHILE
+END
+
+// AI Functions
+FUNCTION AITurn()
+    IF current_difficulty = EASY
+        IF Random(100) < 40
+            MakeRandomMove()
+        ELSE
+            MakeSmartMove()
+    ELSE
+        best_score = -1000
+        FOR each empty cell
+            Calculate_Minimax_Score()
+            Update_Best_Move()
+        Make_Best_Move()
+        Check_Game_End()
+
+FUNCTION Minimax(board, isMaximizing, depth)
+    score = EvaluateBoard(board)
+    IF terminal_state
+        RETURN score
+    
+    IF isMaximizing
+        best_score = -1000
+        FOR each empty cell
+            Make_Move()
+            score = Minimax(board, false, depth + 1)
+            Undo_Move()
+            best_score = MAX(score, best_score)
+        RETURN best_score
+    ELSE
+        best_score = 1000
+        FOR each empty cell
+            Make_Move()
+            score = Minimax(board, true, depth + 1)
+            Undo_Move()
+            best_score = MIN(score, best_score)
+        RETURN best_score
+
+// Helper Functions
+FUNCTION CheckWin(player)
+    Check_Rows()
+    Check_Columns()
+    Check_Diagonals()
+    RETURN win_found
+
+FUNCTION CheckDraw()
+    FOR each cell
+        IF cell is empty
+            RETURN false
+    RETURN true
+
+FUNCTION DrawAIAnalysis()
+    Draw_Title()
+    Draw_Statistics()
+    Draw_Confusion_Matrix()
+    Draw_Difficulty_Stats()
+    Draw_Scrollbar()
+    Draw_Back_Button()
+
+FUNCTION LoadAndEvaluateDataset()
+    Open_Dataset()
+    Calculate_Accuracies()
+    Update_Confusion_Matrix()
+    Close_Dataset()
+
+CloseWindow()

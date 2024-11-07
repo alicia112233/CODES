@@ -1,0 +1,87 @@
+void DrawMenu() {
+    const int titleFontSize = 40;
+    const int buttonFontSize = 20;
+    const int buttonWidth = 200;
+    const int buttonHeight = 40;
+    
+    // Title
+    const char* title = "Tic-Tac-Toe";
+    Vector2 titlePos = {
+        SCREEN_WIDTH/2 - MeasureText(title, titleFontSize)/2,
+        SCREEN_HEIGHT/3
+    };
+    DrawText(title, titlePos.x, titlePos.y, titleFontSize, BLACK);
+    
+    // Single Player Button
+    Rectangle singlePlayerBtn = {
+        SCREEN_WIDTH/2 - buttonWidth/2,
+        SCREEN_HEIGHT/2,
+        buttonWidth,
+        buttonHeight
+    };
+    DrawRectangleRec(singlePlayerBtn, LIGHTGRAY);
+    const char* singlePlayerText = "Single Player";
+    Vector2 singlePlayerPos = {
+        SCREEN_WIDTH/2 - MeasureText(singlePlayerText, buttonFontSize)/2,
+        SCREEN_HEIGHT/2 + buttonHeight/4
+    };
+    DrawText(singlePlayerText, singlePlayerPos.x, singlePlayerPos.y, buttonFontSize, BLACK);
+    
+    // Two Players Button
+    Rectangle twoPlayerBtn = {
+        SCREEN_WIDTH/2 - buttonWidth/2,
+        SCREEN_HEIGHT/2 + buttonHeight + 20,
+        buttonWidth,
+        buttonHeight
+    };
+    DrawRectangleRec(twoPlayerBtn, LIGHTGRAY);
+    const char* twoPlayerText = "Two Players";
+    Vector2 twoPlayerPos = {
+        SCREEN_WIDTH/2 - MeasureText(twoPlayerText, buttonFontSize)/2,
+        SCREEN_HEIGHT/2 + buttonHeight + 20 + buttonHeight/4
+    };
+    DrawText(twoPlayerText, twoPlayerPos.x, twoPlayerPos.y, buttonFontSize, BLACK);
+}
+
+void DrawGameOver() {
+    const int titleFontSize = 40;
+    const int buttonFontSize = 20;
+    const int buttonWidth = 200;
+    const int buttonHeight = 40;
+    
+    // Result Text
+    const char* resultText;
+    Color resultColor;
+    
+    if (winner == PLAYER_X) {
+        resultText = "Player X Wins!";
+        resultColor = BLUE;
+    } else if (winner == PLAYER_O) {
+        resultText = "Player O Wins!";
+        resultColor = RED;
+    } else {
+        resultText = "It's a Draw!";
+        resultColor = DARKGRAY;
+    }
+    
+    Vector2 resultPos = {
+        SCREEN_WIDTH/2 - MeasureText(resultText, titleFontSize)/2,
+        SCREEN_HEIGHT/3
+    };
+    DrawText(resultText, resultPos.x, resultPos.y, titleFontSize, resultColor);
+    
+    // Back to Menu Button
+    Rectangle menuBtn = {
+        SCREEN_WIDTH/2 - buttonWidth/2,
+        SCREEN_HEIGHT/2 + buttonHeight + 20,
+        buttonWidth,
+        buttonHeight
+    };
+    DrawRectangleRec(menuBtn, LIGHTGRAY);
+    const char* menuText = "Back to Menu";
+    Vector2 menuPos = {
+        SCREEN_WIDTH/2 - MeasureText(menuText, buttonFontSize)/2,
+        SCREEN_HEIGHT/2 + buttonHeight + 20 + buttonHeight/4
+    };
+    DrawText(menuText, menuPos.x, menuPos.y, buttonFontSize, BLACK);
+}
