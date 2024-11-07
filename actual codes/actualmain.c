@@ -406,8 +406,8 @@ void EvaluateLinearRegression(float weights[FEATURES + 1]) {
     fclose(file);
 
     // Print confusion matrix
-    printf("Confusion Matrix:\n");
-    printf("TP: %d, TN: %d, FP: %d, FN: %d\n", confusionMatrix.tp, confusionMatrix.tn, confusionMatrix.fp, confusionMatrix.fn);
+    // printf("Confusion Matrix:\n");
+    // printf("TP: %d, TN: %d, FP: %d, FN: %d\n", confusionMatrix.tp, confusionMatrix.tn, confusionMatrix.fp, confusionMatrix.fn);
 }
 
 // function to draw difficulty selection screen
@@ -549,6 +549,7 @@ void evaluateAccuracy(FILE *file) {
     // Print confusion matrix
     printf("Training Confusion Matrix:\n");
     printf("TP: %d, TN: %d, FP: %d, FN: %d\n", trainingCM.tp, trainingCM.tn, trainingCM.fp, trainingCM.fn);
+
     printf("Testing Confusion Matrix:\n");
     printf("TP: %d, TN: %d, FP: %d, FN: %d\n", testingCM.tp, testingCM.tn, testingCM.fp, testingCM.fn);
 }
@@ -1005,29 +1006,29 @@ void DrawGameOver() {
         resultColor
     );
     
-    // Back to Menu Button
-    Rectangle menuBtn = {
-        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + 40,
-        BUTTON_WIDTH,
-        BUTTON_HEIGHT
-    };
-    
     // Retry Button
     Rectangle retryBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + 100, // Position below the menu button
+        SCREEN_HEIGHT/2 + 40, // Position above the menu button
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
     
+    // Back to Menu Button
+    Rectangle menuBtn = {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + 100,  // Position below the result text
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    };
+          
     Vector2 mousePos = GetMousePosition();
     bool isHoveringMenu = CheckCollisionPointRec(mousePos, menuBtn);
     bool isHoveringRetry = CheckCollisionPointRec(mousePos, retryBtn);
     
     // Draw buttons with hover effect
-    DrawButton(menuBtn, "Back to Menu", buttonFontSize, isHoveringMenu);
     DrawButton(retryBtn, "Retry", buttonFontSize, isHoveringRetry);
+    DrawButton(menuBtn, "Back to Menu", buttonFontSize, isHoveringMenu);
     
     // Set cursor
     SetMouseCursor((isHoveringMenu || isHoveringRetry) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
@@ -1066,7 +1067,7 @@ void DrawAIAnalysis() {
 
     // Draw Dataset Statistics
     char buffer[100];
-    snprintf(buffer, sizeof(buffer), "Total Games in Dataset: %d", easyStats.totalGames + mediumStats.totalGames + hardStats.totalGames);
+    snprintf(buffer, sizeof(buffer), "Total Games Played: %d", easyStats.totalGames + mediumStats.totalGames + hardStats.totalGames);
     DrawText(buffer, padding, currentY, textFontSize, BLACK);
     currentY += textFontSize + padding;
 
