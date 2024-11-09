@@ -1,40 +1,4 @@
-#include "raylib.h"
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <math.h>
-#include <limits.h>
-
-#define SCREEN_WIDTH 600
-#define SCREEN_HEIGHT 600
-#define BUTTON_WIDTH 200
-#define BUTTON_HEIGHT 40
-#define GRID_SIZE 3
-#define CELL_SIZE (SCREEN_WIDTH / GRID_SIZE)
-#define FEATURES 9 // Number of features (board positions)
-
-typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
-typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
-typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, AI_ANALYSIS } GameState;
-typedef enum { EASY, MEDIUM, HARD } Difficulty;
-
-typedef struct {
-    int wins;
-    int losses;
-    int draws;
-    int totalGames;
-} DifficultyStats;
-
-typedef struct {
-    int tp, tn, fp, fn; // True Positives, True Negatives, False Positives, False Negatives
-} ConfusionMatrix;
-
-typedef struct {
-    int correctPredictions;
-    int totalPredictions;
-} AccuracyResult;
+#include "main.h"
 
 DifficultyStats easyStats = {0, 0, 0, 0};
 DifficultyStats mediumStats = {0, 0, 0, 0};
@@ -52,35 +16,12 @@ ConfusionMatrix confusionMatrix = {0, 0, 0, 0};
 float trainingAccuracy = 0.0f;
 float testingAccuracy = 0.0f;
 
-// Declare scroll variables
-static float scrollY = 0.0f;
-static const float scrollSpeed = 20.0f;
-
-void InitGame();
-void UpdateGame();
-void UpdateGameOver();
-void HandlePlayerTurn();
-void AITurn();
-void DrawGame();
-void DrawDifficultySelect(void);
-bool CheckWin(Cell player);
-bool CheckDraw();
-void DrawMenu();
-void DrawGameOver();
-void LoadAndEvaluateDataset(void);
-void DisplayDifficultyStats(void);
-
-int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
-int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
-
-void DrawAIAnalysis();
-void DrawDifficultySection(const char* difficulty, DifficultyStats stats, int* y, Color color, int padding, int textFontSize);
-void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered);
-
-// Linear Regression Functions
-void TrainLinearRegression(float weights[FEATURES + 1], float learningRate, int epochs);
-float PredictLinearRegression(float weights[FEATURES + 1], float features[FEATURES]);
-void EvaluateLinearRegression(float weights[FEATURES + 1]);
+float titleCellScales[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
+float titleRotations[TITLE_GRID_SIZE][TITLE_GRID_SIZE] = {0};
+float titleAnimSpeed = 2.0f;
+float buttonVibrationOffset = 0.0f;
+float vibrationSpeed = 15.0f;
+float vibrationAmount = 2.0f;
 
 int main(void)
 {
@@ -98,20 +39,20 @@ int main(void)
                 Vector2 mousePos = GetMousePosition();
                 // Single Player button
                 if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
-                    mousePos.y >= SCREEN_HEIGHT/2 && mousePos.y <= SCREEN_HEIGHT/2 + 40) {
+                    mousePos.y >= SCREEN_HEIGHT/2 + 60 && mousePos.y <= SCREEN_HEIGHT/2 + 100) {
                     isTwoPlayer = false;
                     gameState = DIFFICULTY_SELECT;  // go to difficulty selection instead of game
                 }
                 // Two Player button
                 else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
-                        mousePos.y >= SCREEN_HEIGHT/2 + 60 && mousePos.y <= SCREEN_HEIGHT/2 + 100) {
+                        mousePos.y >= SCREEN_HEIGHT/2 + 120 && mousePos.y <= SCREEN_HEIGHT/2 + 160) {
                     isTwoPlayer = true;
                     gameState = GAME;
                     InitGame();
                 }
                 // AI Analysis button
                 else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
-                    mousePos.y >= SCREEN_HEIGHT/2 + 120 && mousePos.y <= SCREEN_HEIGHT/2 + 160) {
+                    mousePos.y >= SCREEN_HEIGHT/2 + 180 && mousePos.y <= SCREEN_HEIGHT/2 + 220) {
                     LoadAndEvaluateDataset();
                     gameState = AI_ANALYSIS;  // Change to AI Analysis state instead of just displaying stats
                 }
@@ -128,6 +69,12 @@ int main(void)
         else if (gameState == DIFFICULTY_SELECT) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 Vector2 mousePos = GetMousePosition();
+
+                // Back button
+                if (mousePos.x >= 20 && mousePos.x <= SCREEN_WIDTH/6 && mousePos.y >= 10 && mousePos.y <= 40) {
+                    gameState = MENU;
+                }
+
                 if (mousePos.x >= SCREEN_WIDTH/2 - BUTTON_WIDTH/2 && 
                     mousePos.x <= SCREEN_WIDTH/2 + BUTTON_WIDTH/2) {
                     // easy button
@@ -203,16 +150,16 @@ void UpdateGameOver() {
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         Vector2 mousePos = GetMousePosition();
         
-        // Back to Menu Button
-        Rectangle menuBtn = {
+        // Retry Button
+        Rectangle retryBtn = {
             SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
             SCREEN_HEIGHT/2 + 40,
             BUTTON_WIDTH,
             BUTTON_HEIGHT
         };
         
-        // Retry Button
-        Rectangle retryBtn = {
+        // Back to Menu Button
+        Rectangle menuBtn = {
             SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
             SCREEN_HEIGHT/2 + 100,
             BUTTON_WIDTH,
@@ -404,10 +351,6 @@ void EvaluateLinearRegression(float weights[FEATURES + 1]) {
     }
 
     fclose(file);
-
-    // Print confusion matrix
-    // printf("Confusion Matrix:\n");
-    // printf("TP: %d, TN: %d, FP: %d, FN: %d\n", confusionMatrix.tp, confusionMatrix.tn, confusionMatrix.fp, confusionMatrix.fn);
 }
 
 // function to draw difficulty selection screen
@@ -445,46 +388,39 @@ void DrawDifficultySelect() {
         BUTTON_HEIGHT
     };
 
+    // Add back button at top left
+    Rectangle backBtn = {
+        20,                // Left margin
+        10,                // Top margin  
+        SCREEN_WIDTH/6,    // Width (100px at 600px screen width)
+        30                 // Height
+    };
+
     Vector2 mousePos = GetMousePosition();
     
     // Check hover states
     bool easyHover = CheckCollisionPointRec(mousePos, easyBtn);
     bool mediumHover = CheckCollisionPointRec(mousePos, mediumBtn);
     bool hardHover = CheckCollisionPointRec(mousePos, hardBtn);
+    bool backHover = CheckCollisionPointRec(mousePos, backBtn);
 
     // Draw buttons with hover effects
     DrawButton(easyBtn, "Easy", buttonFontSize, easyHover);
     DrawButton(mediumBtn, "Medium", buttonFontSize, mediumHover);
     DrawButton(hardBtn, "Hard", buttonFontSize, hardHover);
+    DrawButton(backBtn, "Back", buttonFontSize, backHover);
 
     // Set cursor based on any button hover
-    SetMouseCursor((easyHover || mediumHover || hardHover) ? 
+    SetMouseCursor((easyHover || mediumHover || hardHover || backHover) ? 
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
-}
 
-void DisplayDifficultyStats() {
-    printf("\n=== Difficulty Level Statistics ===\n");
-    
-    // Easy Stats
-    printf("\nEasy Mode:");
-    printf("\nAI Wins: %d", easyStats.wins);
-    printf("\nAI Losses: %d", easyStats.losses);
-    printf("\nAI Draws: %d", easyStats.draws);
-    printf("\nAI Win Rate: %.2f%%\n", easyStats.totalGames > 0 ? (float)easyStats.wins/easyStats.totalGames * 100 : 0);
-    
-    // Medium Stats
-    printf("\nMedium Mode:");
-    printf("\nAI Wins: %d", mediumStats.wins);
-    printf("\nAI Losses: %d", mediumStats.losses);
-    printf("\nAI Draws: %d", mediumStats.draws);
-    printf("\nAI Win Rate: %.2f%%\n", mediumStats.totalGames > 0 ? (float)mediumStats.wins/mediumStats.totalGames * 100 : 0);
-    
-    // Hard Stats
-    printf("\nHard Mode:");
-    printf("\nAI Wins: %d", hardStats.wins);
-    printf("\nAI Losses: %d", hardStats.losses);
-    printf("\nAI Draws: %d", hardStats.draws);
-    printf("\nAI Win Rate: %.2f%%\n", hardStats.totalGames > 0 ? (float)hardStats.wins/hardStats.totalGames * 100 : 0);
+    // Draw back button with hover effect
+    DrawButton(backBtn, "Back", buttonFontSize, backHover);
+
+    // Update cursor state to include back button hover
+    SetMouseCursor((easyHover || mediumHover || hardHover || backHover) ? 
+        MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+
 }
 
 bool simulateGame(char* gameState, int expectedOutcome) {
@@ -678,7 +614,6 @@ void UpdateGame()
         if (mousePos.x >= SCREEN_WIDTH - 80 && mousePos.x <= SCREEN_WIDTH - 10 &&
             mousePos.y >= 10 && mousePos.y <= 40)
         {
-            DisplayDifficultyStats();  // Show stats before returning to menu
             gameState = MENU;
             return;
         }
@@ -923,30 +858,76 @@ void DrawMenu() {
     
     // Title
     const char* title = "Tic-Tac-Toe";
+    const int cellSize = 50;  // larger cells for better visibility
+    const int gridWidth = TITLE_GRID_SIZE * cellSize;
+    const int gridHeight = TITLE_GRID_SIZE * cellSize;
+    const int startX = SCREEN_WIDTH/2 - gridWidth/2;
+    const int startY = SCREEN_HEIGHT/5;
+
+    // cell animations
+    for(int i = 0; i < TITLE_GRID_SIZE; i++) {
+        for(int j = 0; j < TITLE_GRID_SIZE; j++) {
+            Rectangle cell = {
+                startX + j * cellSize,
+                startY + i * cellSize,
+                cellSize,
+                cellSize
+            };
+            
+            // Draw just the grid lines
+            DrawRectangleLinesEx(cell, 2, BLACK);
+
+            // Handle the X and O symbols
+            if (!titleSymbols[i][j].active && GetRandomValue(0, 100) < 2) {
+                titleSymbols[i][j].symbol = GetRandomValue(0, 1) ? 'X' : 'O';
+                titleSymbols[i][j].alpha = 0;
+                titleSymbols[i][j].active = true;
+            }
+
+            if (titleSymbols[i][j].active) {
+                titleSymbols[i][j].alpha += GetFrameTime() * 2;
+                if (titleSymbols[i][j].alpha > 1.0f) {
+                    titleSymbols[i][j].alpha = 0;
+                    titleSymbols[i][j].active = false;
+                }
+
+                Color symbolColor = titleSymbols[i][j].symbol == 'X' ? BLUE : RED;
+                symbolColor.a = (unsigned char)(titleSymbols[i][j].alpha * 255);
+                
+                Vector2 textPos = {
+                    cell.x + (cellSize - MeasureText(&titleSymbols[i][j].symbol, 40))/2,
+                    cell.y + (cellSize - 40)/2
+                };
+                DrawText(&titleSymbols[i][j].symbol, textPos.x, textPos.y, 40, symbolColor);
+            }
+        }
+    }
+
+    // Draw title text below the grid
     DrawText(title, 
         SCREEN_WIDTH/2 - MeasureText(title, titleFontSize)/2,
-        SCREEN_HEIGHT/3,
+        startY + gridHeight + 20,
         titleFontSize,
         BLACK);
     
     // Button rectangles
     Rectangle singlePlayerBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2,
+        SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
     
     Rectangle twoPlayerBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + BUTTON_HEIGHT + 20,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2,
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
     
     Rectangle analysisBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 2,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 3,
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
@@ -986,7 +967,7 @@ void DrawGameOver() {
         resultText = isTwoPlayer ? "Player O Wins!" : "U so noob!";
         resultColor = RED;
     } else {
-        resultText = "Draw!";
+        resultText = "It's a Draw!";
         resultColor = DARKGRAY;
     }
     
@@ -1017,7 +998,7 @@ void DrawGameOver() {
     // Back to Menu Button
     Rectangle menuBtn = {
         SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
-        SCREEN_HEIGHT/2 + 100,  // Position below the result text
+        SCREEN_HEIGHT/2 + 100,  // Position below the retry button
         BUTTON_WIDTH,
         BUTTON_HEIGHT
     };
@@ -1176,13 +1157,48 @@ void DrawDifficultySection(const char* difficulty, DifficultyStats stats, int* y
 
 // Add the function definition
 void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered) {
-    DrawRectangleRec(bounds, isHovered ? GRAY : LIGHTGRAY);
-    DrawRectangleLinesEx(bounds, 2, BLACK);
+    Rectangle vibrationBounds = bounds;
+    
+    if (isHovered && (strstr(text, "Single Player") || 
+                      strstr(text, "Two Players") || 
+                      strstr(text, "Easy") ||
+                      strstr(text, "Medium") ||
+                      strstr(text, "Hard") ||
+                      strstr(text, "View AI Analysis"))) {
+        buttonVibrationOffset = sinf(GetTime() * vibrationSpeed) * vibrationAmount;
+        vibrationBounds.x += buttonVibrationOffset;
+    }
+
+    DrawRectangleRec(vibrationBounds, isHovered ? GRAY : LIGHTGRAY);
+    DrawRectangleLinesEx(vibrationBounds, 2, BLACK);
+
+    // individual customization for single player and two players buttons
+    // if (strstr(text, "Single Player")) {
+    //     DrawText(text,
+    //         vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2,
+    //         vibrationBounds.y + (vibrationBounds.height - fontSize)/2,
+    //         fontSize,
+    //         BLACK
+    //     );
+    // }
+    // else if (strstr(text, "Two Players")) {
+    //     DrawText(text,
+    //         vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2,
+    //         vibrationBounds.y + (vibrationBounds.height - fontSize)/2,
+    //         fontSize,
+    //         BLACK
+    //     );
+    // }
+    // else {
+    // Original button drawing for other buttons
     DrawText(text,
-        bounds.x + (bounds.width - MeasureText(text, fontSize))/2,
-        bounds.y + (bounds.height - fontSize)/2,
+        vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2,
+        vibrationBounds.y + (vibrationBounds.height - fontSize)/2,
         fontSize,
-        BLACK);
+        BLACK
+    );
+    // }
 }
 
-// gcc -o actualmain actualmain.c -IC:\\msys64\\mingw64\\include -LC:\\msys64\\mingw64\\lib -lraylib -lopengl32 -lgdi32 -lwinmm
+// gcc -o actualmain actualmain.c -LC:\\msys64\\mingw64\\lib -lraylib
+// ./actualmain.exe
