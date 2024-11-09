@@ -1,159 +1,272 @@
-STRUCT ConfusionMatrix
-    tp, tn, fp, fn
+// Define global variables for game statistics, settings, and states
+INITIALIZE easyStats, mediumStats, hardStats WITH values (0, 0, 0, 0)
+currentDifficulty <-- MEDIUM
+INITIALIZE grid <-- a 2D array representing the game grid
+currentPlayerTurn <-- PLAYER_X_TURN
+gameOver <-- false
+winner <-- EMPTY
+gameState <-- MENU
+isTwoPlayer <-- false
 
-STRUCT AccuracyResult
-    correctPredictions, totalPredictions
+// Initialize confusion matrix and accuracy metrics for tracking AI performance
+INITIALIZE confusionMatrix WITH values (0, 0, 0, 0)
+trainingAccuracy <-- 0.0
+testingAccuracy <-- 0.0
 
-// Initialize Global Variables
-screen_width <- 600
-screen_height <- 600
-grid_size <- 3
-cell_size <- screen_width / grid_size
-current_difficulty <- MEDIUM
-game_state <- MENU
-is_two_player <- false
-scroll_y <- 0
-scroll_speed <- 20
+// Define animation variables for visual effects
+INITIALIZE titleCellScales, titleRotations <-- arrays with title animation settings
+titleAnimSpeed <-- 2.0
+buttonVibrationOffset <-- 0.0
+vibrationSpeed <-- 15.0
+vibrationAmount <-- 2.0
 
-// Main Program
-
-Initialize_Window(screen_width, screen_height, "Tic-Tac-Toe")
-
+// MAIN FUNCTION
 BEGIN
-    WHILE NOT WindowShouldClose()
-        SWITCH game_state
-            CASE MENU:
-                IF MouseButtonPressed(LEFT)
-                    GET mouse_position
-                    IF clicked_single_player
-                        is_two_player = false
-                        game_state = DIFFICULTY_SELECT
-                    ELSE IF clicked_two_player
-                        is_two_player = true
-                        game_state = GAME
-                        InitGame()
-                    ELSE IF clicked_ai_analysis
-                        LoadAndEvaluateDataset()
-                        game_state = AI_ANALYSIS
-                
-            CASE DIFFICULTY_SELECT:
-                IF MouseButtonPressed(LEFT)
-                    GET mouse_position
-                    IF clicked_easy
-                        current_difficulty = EASY
-                    ELSE IF clicked_medium
-                        current_difficulty = MEDIUM
-                    ELSE IF clicked_hard
-                        current_difficulty = HARD
-                    game_state = GAME
-                    InitGame()
-                
-            CASE GAME:
-                IF NOT game_over
-                    IF current_turn = PLAYER_X
-                        HandlePlayerTurn()
-                    ELSE
-                        IF is_two_player
-                            HandlePlayerTurn()
-                        ELSE
-                            AITurn()
-                
-            CASE GAME_OVER:
-                IF MouseButtonPressed(LEFT)
-                    IF clicked_menu
-                        game_state = MENU
-                    ELSE IF clicked_retry
-                        game_state = GAME
-                        InitGame()
-                
-            CASE AI_ANALYSIS:
-                Handle_Scrolling()
-                IF clicked_back
-                    game_state = MENU
-        
-        // Drawing Functions
-        BeginDrawing()
-            ClearBackground(WHITE)
-            
-            SWITCH game_state
-                CASE MENU:
-                    DrawMenu()
-                CASE DIFFICULTY_SELECT:
-                    DrawDifficultySelect()
-                CASE GAME:
-                    DrawGame()
-                CASE GAME_OVER:
-                    DrawGame()
-                    DrawGameOver()
-                CASE AI_ANALYSIS:
-                    DrawAIAnalysis()
-            
-        EndDrawing()
-    ENDWHILE
+    CALL InitWindow WITH parameters SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe"
+
+    // Initialize linear regression weights for AI functionality
+    INITIALIZE weights array WITH 0 values (for features and bias term)
+    CALL TrainLinearRegression WITH parameters weights, 0.01, 1000
+    CALL EvaluateLinearRegression WITH parameter weights
+
+    WHILE WindowShouldClose() IS FALSE
+        IF gameState IS MENU THEN
+            CALL HandleMenuInput()
+        ELSE IF gameState IS GAME THEN
+            CALL UpdateGame()
+        ELSE IF gameState IS GAME_OVER THEN
+            CALL UpdateGameOver()
+        ELSE IF gameState IS DIFFICULTY_SELECT THEN
+            CALL HandleDifficultySelect()
+        ELSE IF gameState IS AI_ANALYSIS THEN
+            CALL HandleAIAnalysis()
+        END IF
+
+        CALL BeginDrawing()
+            CALL ClearBackground WITH color RAYWHITE
+            CALL DrawCurrentGameState()
+        CALL EndDrawing()
+    END WHILE
+
+    CALL CloseWindow()
 END
 
-// AI Functions
-FUNCTION AITurn()
-    IF current_difficulty = EASY
-        IF Random(100) < 40
-            MakeRandomMove()
-        ELSE
-            MakeSmartMove()
-    ELSE
-        best_score = -1000
-        FOR each empty cell
-            Calculate_Minimax_Score()
-            Update_Best_Move()
-        Make_Best_Move()
-        Check_Game_End()
+// AI Decision Making Function
+FUNCTION MINIMAX()
+    IF depth >= depthLimit THEN
+        RETURN 0
+    END IF
 
-FUNCTION Minimax(board, isMaximizing, depth)
-    score = EvaluateBoard(board)
-    IF terminal_state
+    score TO EvaluateBoard(board)
+    IF score IS 10 OR score IS -10 THEN
         RETURN score
-    
-    IF isMaximizing
-        best_score = -1000
+    END IF
+    IF CheckDraw() IS TRUE THEN
+        RETURN 0
+    END IF
+
+    IF isMaximizing THEN
+        bestScore TO -1000
         FOR each empty cell
-            Make_Move()
-            score = Minimax(board, false, depth + 1)
-            Undo_Move()
-            best_score = MAX(score, best_score)
-        RETURN best_score
+            MAKE move
+            bestScore <-- MAX(bestScore, Minimax(board, false, depth + 1))
+            UNDO move
+        END FOR
+        RETURN bestScore
     ELSE
-        best_score = 1000
+        bestScore <-- 1000
         FOR each empty cell
-            Make_Move()
-            score = Minimax(board, true, depth + 1)
-            Undo_Move()
-            best_score = MIN(score, best_score)
-        RETURN best_score
+            MAKE move
+            bestScore <-- MIN(bestScore, Minimax(board, true, depth + 1))
+            UNDO move
+        END FOR
+        RETURN bestScore
+    END IF
+ENDFUNCTION
 
-// Helper Functions
-FUNCTION CheckWin(player)
-    Check_Rows()
-    Check_Columns()
-    Check_Diagonals()
-    RETURN win_found
+// Linear Regression Training Function
+FUNCTION TRAIN_LINEAR_REGRESSION()
+    OPEN training data file
+    FOR epoch FROM 1 TO epochs
+        FOR each training example
+            EXTRACT features AND outcome
+            CALCULATE prediction
+            UPDATE weights based on prediction error
+        END FOR
+    END FOR
+    CLOSE file
+ENDFUNCTION
 
-FUNCTION CheckDraw()
-    FOR each cell
-        IF cell is empty
+// Game State Update Function
+FUNCTION UPDATE_GAME()
+    IF gameOver THEN
+        RETURN
+    END IF
+
+    IF currentPlayerTurn IS PLAYER_X_TURN THEN
+        CALL HandlePlayerTurn()
+    ELSE
+        IF isTwoPlayer THEN
+            CALL HandlePlayerTurn()
+        ELSE
+            CALL AITurn()
+        END IF
+    END IF
+ENDFUNCTION
+
+// Menu Input Handler Function
+FUNCTION HANDLE_MENU_INPUT()
+    IF mouse button pressed THEN
+        GET mouse position
+        IF clicking single player button THEN
+            isTwoPlayer <-- false
+            gameState <-- DIFFICULTY_SELECT
+        ELSE IF clicking two player button THEN
+            isTwoPlayer <-- true
+            gameState <-- GAME
+            CALL InitGame()
+        ELSE IF clicking AI analysis button THEN
+            CALL LoadAndEvaluateDataset()
+            gameState <-- AI_ANALYSIS
+        END IF
+    END IF
+ENDFUNCTION
+
+// Game Drawing Function
+FUNCTION DRAW_GAME()
+    FOR each cell in grid
+        DRAW cell background
+        IF cell contains X THEN
+            DRAW X in blue
+        ELSE IF cell contains O THEN
+            DRAW O in red
+        END IF
+    END FOR
+    DRAW grid lines
+    DRAW turn indicator
+    DRAW quit button
+ENDFUNCTION
+
+// Game Over Handler Function
+FUNCTION UPDATE_GAME_OVER()
+    IF mouse button pressed THEN
+        GET mouse position
+        IF clicking retry button THEN
+            gameState <-- GAME
+            CALL InitGame()
+        ELSE IF clicking menu button THEN
+            gameState <-- MENU
+            CALL InitGame()
+        END IF
+    END IF
+ENDFUNCTION
+
+// AI Turn Function
+FUNCTION AI_TURN()
+    bestScore <-- -1000
+    bestMove <-- none
+
+    IF currentDifficulty IS EASY THEN
+        IF random chance < 40% THEN
+            MAKE random move
+        ELSE
+            MAKE first available move
+        END IF
+    ELSE IF currentDifficulty IS MEDIUM THEN
+        depthLimit <-- 3
+        // FIND best move using Minimax with depth limit
+    ELSE IF currentDifficulty IS HARD THEN
+        depthLimit <-- 9
+        // FIND best move using Minimax with full depth
+    END IF
+
+    MAKE selected move
+    CHECK for win or draw
+    UPDATE game statistics
+    SWITCH player turn
+ENDFUNCTION
+
+// Win Checker Function
+FUNCTION CHECK_WIN()
+    CHECK all rows
+    CHECK all columns
+    CHECK both diagonals
+    IF winning line found THEN
+        RETURN true
+    END IF
+    RETURN false
+ENDFUNCTION
+
+// Draw Checker Function
+FUNCTION CHECK_DRAW()
+    FOR each cell in grid
+        IF cell is empty THEN
             RETURN false
+        END IF
+    END FOR
     RETURN true
+ENDFUNCTION
 
-FUNCTION DrawAIAnalysis()
-    Draw_Title()
-    Draw_Statistics()
-    Draw_Confusion_Matrix()
-    Draw_Difficulty_Stats()
-    Draw_Scrollbar()
-    Draw_Back_Button()
+// AI Analysis Drawing Function
+FUNCTION DRAW_AI_ANALYSIS()
+    DRAW title
+    DRAW model performance statistics
+    DRAW confusion matrix
+    DRAW difficulty statistics
+    DRAW scrollbar
+    DRAW back button
+ENDFUNCTION
 
-FUNCTION LoadAndEvaluateDataset()
-    Open_Dataset()
-    Calculate_Accuracies()
-    Update_Confusion_Matrix()
-    Close_Dataset()
+// Difficulty Selection Handler Function
+FUNCTION DRAW_DIFFICULTY_SELECT()
+    DRAW title "Select Difficulty"
+    DRAW back button at top left
+    DRAW easy button with hover effect
+    DRAW medium button with hover effect
+    DRAW hard button with hover effect
+    UPDATE cursor state based on hover
+ENDFUNCTION
 
-CloseWindow()
+// Button Drawing Function
+FUNCTION DRAW_BUTTON()
+    IF button is hovered THEN
+        APPLY horizontal vibration effect
+    END IF
+    DRAW button background
+    DRAW button border
+    IF button is player mode THEN
+        DRAW player count symbol
+    END IF
+    DRAW button text
+ENDFUNCTION
+
+// Menu Drawing Function
+FUNCTION DRAW_MENU()
+    DRAW animated title grid
+    UPDATE and DRAW X/O symbols in grid
+    DRAW "Tic-Tac-Toe" text
+    DRAW single player button
+    DRAW two player button
+    DRAW AI analysis button
+ENDFUNCTION
+
+// Game Initialization Function
+FUNCTION INIT_GAME()
+    CLEAR all grid cells
+    gameOver <-- false
+    winner <-- EMPTY
+    currentPlayerTurn <-- PLAYER_X_TURN
+ENDFUNCTION
+
+// Player Turn Handler Function
+FUNCTION HANDLE_PLAYER_TURN()
+    IF mouse clicked THEN
+        GET grid position from mouse coordinates
+        IF cell is empty THEN
+            MAKE move
+            CHECK for win
+            CHECK for draw
+            SWITCH player turn
+        END IF
+    END IF
+ENDFUNCTION

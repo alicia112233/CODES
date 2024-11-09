@@ -1190,6 +1190,7 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
     //     );
     // }
     // else {
+    
     // Original button drawing for other buttons
     DrawText(text,
         vibrationBounds.x + (vibrationBounds.width - MeasureText(text, fontSize))/2,
