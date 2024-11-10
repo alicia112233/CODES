@@ -37,9 +37,11 @@ BEGIN
         ELSE IF gameState IS GAME_OVER THEN
             CALL UpdateGameOver()
         ELSE IF gameState IS DIFFICULTY_SELECT THEN
-            CALL HandleDifficultySelect()
+            CALL HANDLE_DIFFICULTY_SELECT()
         ELSE IF gameState IS AI_ANALYSIS THEN
-            CALL HandleAIAnalysis()
+            CALL HANDLE_AI_ANALYSIS()
+        ELSE IF gameState IS HOW_TO_PLAY THEN
+            CALL HANDLE_HOW_TO_PLAY()
         END IF
 
         CALL BeginDrawing()
@@ -52,7 +54,7 @@ BEGIN
 END
 
 // AI Decision Making Function
-FUNCTION MINIMAX()
+FUNCTION Minimax()
     IF depth >= depthLimit THEN
         RETURN 0
     END IF
@@ -85,7 +87,7 @@ FUNCTION MINIMAX()
 ENDFUNCTION
 
 // Linear Regression Training Function
-FUNCTION TRAIN_LINEAR_REGRESSION()
+FUNCTION TrainLinearRegression()
     OPEN training data file
     FOR epoch FROM 1 TO epochs
         FOR each training example
@@ -97,8 +99,83 @@ FUNCTION TRAIN_LINEAR_REGRESSION()
     CLOSE file
 ENDFUNCTION
 
+// Menu Input Handler Function
+FUNCTION HandleMenuInput()
+    IF mouse button pressed THEN
+        GET mouse position
+        IF clicking single player button THEN
+            isTwoPlayer <-- false
+            gameState <-- DIFFICULTY_SELECT
+        ELSE IF clicking two player button THEN
+            isTwoPlayer <-- true
+            gameState <-- GAME
+            CALL InitGame()
+        ELSE IF clicking AI analysis button THEN
+            CALL LoadAndEvaluateDataset()
+            gameState <-- AI_ANALYSIS
+        END IF
+        ELSE IF clicking how to play button THEN
+            gameState <-- HOW_TO_PLAY
+        END IF
+    END IF
+ENDFUNCTION
+
+// Difficulty Selection Handler Function
+FUNCTION HANDLE_DIFFICULTY_SELECT()
+    IF mouse button pressed THEN
+        GET mouse position
+        
+        // Back button check
+        IF mouse position is in back button area THEN
+            gameState <-- MENU
+        END IF
+        
+        // Difficulty buttons check
+        IF mouse x position is within difficulty buttons width THEN
+            // Easy button
+            IF mouse y position is in easy button area THEN
+                currentDifficulty <-- EASY
+                gameState <-- GAME
+                CALL InitGame()
+            // Medium button
+            ELSE IF mouse y position is in medium button area THEN
+                currentDifficulty <-- MEDIUM
+                gameState <-- GAME
+                CALL InitGame()
+            // Hard button
+            ELSE IF mouse y position is in hard button area THEN
+                currentDifficulty <-- HARD
+                gameState <-- GAME
+                CALL InitGame()
+            END IF
+        END IF
+    END IF
+ENDFUNCTION
+
+// AI Analysis Handler Function
+FUNCTION HANDLE_AI_ANALYSIS()
+    IF mouse button pressed THEN
+        GET mouse position
+        CREATE back button rectangle
+        IF mouse position collides with back button THEN
+            gameState <-- MENU
+        END IF
+    END IF
+ENDFUNCTION
+
+// How To Play Handler Function
+FUNCTION HANDLE_HOW_TO_PLAY()
+    IF mouse button pressed THEN
+        GET mouse position
+        CREATE back button rectangle
+        IF mouse position collides with back button THEN
+            gameState <-- MENU
+        END IF
+    END IF
+ENDFUNCTION
+
 // Game State Update Function
-FUNCTION UPDATE_GAME()
+FUNCTION UpdateGame()
     IF gameOver THEN
         RETURN
     END IF
@@ -114,41 +191,8 @@ FUNCTION UPDATE_GAME()
     END IF
 ENDFUNCTION
 
-// Menu Input Handler Function
-FUNCTION HANDLE_MENU_INPUT()
-    IF mouse button pressed THEN
-        GET mouse position
-        IF clicking single player button THEN
-            isTwoPlayer <-- false
-            gameState <-- DIFFICULTY_SELECT
-        ELSE IF clicking two player button THEN
-            isTwoPlayer <-- true
-            gameState <-- GAME
-            CALL InitGame()
-        ELSE IF clicking AI analysis button THEN
-            CALL LoadAndEvaluateDataset()
-            gameState <-- AI_ANALYSIS
-        END IF
-    END IF
-ENDFUNCTION
-
-// Game Drawing Function
-FUNCTION DRAW_GAME()
-    FOR each cell in grid
-        DRAW cell background
-        IF cell contains X THEN
-            DRAW X in blue
-        ELSE IF cell contains O THEN
-            DRAW O in red
-        END IF
-    END FOR
-    DRAW grid lines
-    DRAW turn indicator
-    DRAW quit button
-ENDFUNCTION
-
 // Game Over Handler Function
-FUNCTION UPDATE_GAME_OVER()
+FUNCTION UpdateGameOver()
     IF mouse button pressed THEN
         GET mouse position
         IF clicking retry button THEN
@@ -162,7 +206,7 @@ FUNCTION UPDATE_GAME_OVER()
 ENDFUNCTION
 
 // AI Turn Function
-FUNCTION AI_TURN()
+FUNCTION AITurn()
     bestScore <-- -1000
     bestMove <-- none
 
@@ -187,7 +231,7 @@ FUNCTION AI_TURN()
 ENDFUNCTION
 
 // Win Checker Function
-FUNCTION CHECK_WIN()
+FUNCTION CheckWin()
     CHECK all rows
     CHECK all columns
     CHECK both diagonals
@@ -198,7 +242,7 @@ FUNCTION CHECK_WIN()
 ENDFUNCTION
 
 // Draw Checker Function
-FUNCTION CHECK_DRAW()
+FUNCTION CheckDraw()
     FOR each cell in grid
         IF cell is empty THEN
             RETURN false
@@ -207,8 +251,32 @@ FUNCTION CHECK_DRAW()
     RETURN true
 ENDFUNCTION
 
+// How To Play Drawing Function
+FUNCTION DrawHowToPlay()
+    DRAW title "How to Play"
+    DRAW single player instructions
+    DRAW two player instructions
+    DRAW controls instructions
+    DRAW back button WITH hover effect
+ENDFUNCTION
+
+// Game Drawing Function
+FUNCTION DrawGame()
+    FOR each cell in grid
+        DRAW cell background
+        IF cell contains X THEN
+            DRAW X in blue
+        ELSE IF cell contains O THEN
+            DRAW O in red
+        END IF
+    END FOR
+    DRAW grid lines
+    DRAW turn indicator
+    DRAW quit button
+ENDFUNCTION
+
 // AI Analysis Drawing Function
-FUNCTION DRAW_AI_ANALYSIS()
+FUNCTION DrawAIAnalysis()
     DRAW title
     DRAW model performance statistics
     DRAW confusion matrix
@@ -218,7 +286,7 @@ FUNCTION DRAW_AI_ANALYSIS()
 ENDFUNCTION
 
 // Difficulty Selection Handler Function
-FUNCTION DRAW_DIFFICULTY_SELECT()
+FUNCTION DrawDifficultySelect()
     DRAW title "Select Difficulty"
     DRAW back button at top left
     DRAW easy button with hover effect
@@ -228,30 +296,29 @@ FUNCTION DRAW_DIFFICULTY_SELECT()
 ENDFUNCTION
 
 // Button Drawing Function
-FUNCTION DRAW_BUTTON()
-    IF button is hovered THEN
+FUNCTION DrawButton()
+    IF button is hovered AND 
+       (button is single player OR two player OR difficulty OR AI analysis OR how to play) THEN
         APPLY horizontal vibration effect
     END IF
     DRAW button background
     DRAW button border
-    IF button is player mode THEN
-        DRAW player count symbol
-    END IF
     DRAW button text
 ENDFUNCTION
 
 // Menu Drawing Function
-FUNCTION DRAW_MENU()
+FUNCTION DrawMenu()
     DRAW animated title grid
     UPDATE and DRAW X/O symbols in grid
     DRAW "Tic-Tac-Toe" text
-    DRAW single player button
-    DRAW two player button
-    DRAW AI analysis button
+    DRAW single player button WITH vibration
+    DRAW two player button WITH vibration
+    DRAW AI analysis button WITH vibration
+    DRAW how to play button WITH vibration
 ENDFUNCTION
 
 // Game Initialization Function
-FUNCTION INIT_GAME()
+FUNCTION InitGame()
     CLEAR all grid cells
     gameOver <-- false
     winner <-- EMPTY
@@ -259,7 +326,7 @@ FUNCTION INIT_GAME()
 ENDFUNCTION
 
 // Player Turn Handler Function
-FUNCTION HANDLE_PLAYER_TURN()
+FUNCTION HandlePlayerTurn()
     IF mouse clicked THEN
         GET grid position from mouse coordinates
         IF cell is empty THEN
