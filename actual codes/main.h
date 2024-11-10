@@ -21,7 +21,7 @@
 
 typedef enum { EMPTY, PLAYER_X, PLAYER_O } Cell;
 typedef enum { PLAYER_X_TURN, PLAYER_O_TURN } PlayerTurn;
-typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, AI_ANALYSIS } GameState;
+typedef enum { MENU, DIFFICULTY_SELECT, GAME, GAME_OVER, AI_ANALYSIS, HOW_TO_PLAY } GameState;
 typedef enum { EASY, MEDIUM, HARD } Difficulty;
 
 typedef struct {
@@ -83,6 +83,7 @@ bool CheckDraw();
 void DrawMenu();
 void DrawGameOver();
 void LoadAndEvaluateDataset(void);
+void DrawHowToPlay(void);
 
 int Minimax(Cell board[GRID_SIZE][GRID_SIZE], bool isMaximizing, int depth, int depthLimit);
 int EvaluateBoard(Cell board[GRID_SIZE][GRID_SIZE]);
@@ -95,5 +96,7 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
 void TrainLinearRegression(float weights[FEATURES + 1], float learningRate, int epochs);
 float PredictLinearRegression(float weights[FEATURES + 1], float features[FEATURES]);
 void EvaluateLinearRegression(float weights[FEATURES + 1]);
+
+Font customFont;
 
 #endif // MAIN_H

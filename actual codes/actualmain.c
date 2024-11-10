@@ -26,6 +26,7 @@ float vibrationAmount = 2.0f;
 int main(void)
 {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic-Tac-Toe");
+    customFont = LoadFont("sourgummy.ttf");  // Replace with your font file
 
     // Initialize weights for linear regression
     float weights[FEATURES + 1] = {0}; // +1 for the bias term
@@ -55,6 +56,11 @@ int main(void)
                     mousePos.y >= SCREEN_HEIGHT/2 + 180 && mousePos.y <= SCREEN_HEIGHT/2 + 220) {
                     LoadAndEvaluateDataset();
                     gameState = AI_ANALYSIS;  // Change to AI Analysis state instead of just displaying stats
+                }
+                // How To Play button
+                else if (mousePos.x >= SCREEN_WIDTH/2 - 100 && mousePos.x <= SCREEN_WIDTH/2 + 100 &&
+                        mousePos.y >= SCREEN_HEIGHT/2 + 240 && mousePos.y <= SCREEN_HEIGHT/2 + 280) {
+                    gameState = HOW_TO_PLAY;
                 }
             }
         }
@@ -110,7 +116,22 @@ int main(void)
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT
                 };
-                
+                if (CheckCollisionPointRec(mousePos, backBtn)) {
+                    gameState = MENU;
+                }
+            }
+        }
+
+        else if (gameState == HOW_TO_PLAY) {
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                Vector2 mousePos = GetMousePosition();
+                Rectangle backBtn = {
+                    SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+                    SCREEN_HEIGHT - BUTTON_HEIGHT - 20,
+                    BUTTON_WIDTH,
+                    BUTTON_HEIGHT
+                };
+
                 if (CheckCollisionPointRec(mousePos, backBtn)) {
                     gameState = MENU;
                 }
@@ -137,13 +158,70 @@ int main(void)
             case AI_ANALYSIS:
                 DrawAIAnalysis();
                 break;
+            case HOW_TO_PLAY:
+                DrawHowToPlay();
+                break;
         }
 
         EndDrawing();
     }
 
+    UnloadFont(customFont);
     CloseWindow();
     return 0;
+}
+
+void DrawHowToPlay() {
+    const int titleFontSize = 40;
+    const int textFontSize = 18;
+    const int padding = 15;
+    
+    // Title
+    const char* title = "How to Play";
+    Vector2 titlePos = {
+        SCREEN_WIDTH/2 - MeasureTextEx(customFont, title, titleFontSize, 1).x/2,
+        40
+    };
+    DrawTextEx(customFont, title, titlePos, titleFontSize, 1, BLACK);
+
+    // Instructions
+    const char* instructions[] = {
+        "Single Player:",
+        "- Play against AI with 3 difficulty levels",
+        "- Click empty cells to place your X mark",
+        "- Try to get 3 X's in a row (horizontally, vertically or diagonally) to win!",
+        "",
+        "Two Players:",
+        "- Play against a friend locally",
+        "- Players take turns placing X's and O's",
+        "- First to get 3 in a row (horizontally, vertically or diagonally) wins!",
+        "",
+        "Controls:",
+        "- Use your mouse to click cells and buttons",
+        "- Click 'Quit' to return to menu during the game"
+    };
+
+    int currentY = 120;
+    for (int i = 0; i < 13; i++) {
+        Vector2 textPos = { padding * 2, currentY };
+        Color textColor = (i == 0 || i == 5 || i == 10) ? DARKBLUE : BLACK;
+        DrawTextEx(customFont, instructions[i], textPos, textFontSize, 1, textColor);
+        currentY += textFontSize + padding;
+    }
+
+    // Back button
+    Rectangle backBtn = {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT - BUTTON_HEIGHT - padding,
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    };
+
+    Vector2 mousePos = GetMousePosition();
+    bool isHovering = CheckCollisionPointRec(mousePos, backBtn);
+    
+    DrawButton(backBtn, "Back", textFontSize, isHovering);
+    SetMouseCursor(isHovering ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
 void UpdateGameOver() {
@@ -932,20 +1010,29 @@ void DrawMenu() {
         BUTTON_HEIGHT
     };
 
-    Vector2 mousePos = GetMousePosition();
+    Rectangle howToPlayBtn = {
+        SCREEN_WIDTH/2 - BUTTON_WIDTH/2,
+        SCREEN_HEIGHT/2 + (BUTTON_HEIGHT + 20) * 4,  // Position below analysis button
+        BUTTON_WIDTH,
+        BUTTON_HEIGHT
+    };
     
+    Vector2 mousePos = GetMousePosition();
+
     // Check hover states
     bool singlePlayerHover = CheckCollisionPointRec(mousePos, singlePlayerBtn);
     bool twoPlayerHover = CheckCollisionPointRec(mousePos, twoPlayerBtn);
     bool analysisHover = CheckCollisionPointRec(mousePos, analysisBtn);
+    bool howToPlayHover = CheckCollisionPointRec(mousePos, howToPlayBtn);
 
     // Draw buttons with hover effects
     DrawButton(singlePlayerBtn, "Single Player", buttonFontSize, singlePlayerHover);
     DrawButton(twoPlayerBtn, "Two Players", buttonFontSize, twoPlayerHover);
     DrawButton(analysisBtn, "View AI Analysis", buttonFontSize, analysisHover);
+    DrawButton(howToPlayBtn, "How to Play", buttonFontSize, howToPlayHover);
 
     // Set cursor based on any button hover
-    SetMouseCursor((singlePlayerHover || twoPlayerHover || analysisHover) ? 
+    SetMouseCursor((singlePlayerHover || twoPlayerHover || analysisHover || howToPlayHover) ? 
         MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
@@ -1164,7 +1251,8 @@ void DrawButton(Rectangle bounds, const char* text, int fontSize, bool isHovered
                       strstr(text, "Easy") ||
                       strstr(text, "Medium") ||
                       strstr(text, "Hard") ||
-                      strstr(text, "View AI Analysis"))) {
+                      strstr(text, "View AI Analysis") ||
+                      strstr(text, "How to Play"))) {
         buttonVibrationOffset = sinf(GetTime() * vibrationSpeed) * vibrationAmount;
         vibrationBounds.x += buttonVibrationOffset;
     }
