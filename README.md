@@ -1,7 +1,7 @@
-# Tic-Tac-Toe Game with ML
+## Tic-Tac-Toe Game with ML
 Welcome to the Tic-Tac-Toe game! This is a simple one and two-player game where you can take turns to play Tic-Tac-Toe. This game will display the winner when someone wins. It also leverages Machine Learning to predict moves based on your capabilities!
 
-# Features
+## Features
 1) Single-player game: Enjoy a game with AI of varying difficulty levels.
 2) Two-player game: Enjoy a classic game of Tic-Tac-Toe with a friend. Compete to see who can outplay the other and claim victory.
 3) Interactive Gameplay: The game offers an interactive and user-friendly interface. Simply click on the cells to make your moves. The grid highlights the current player's turn, ensuring a seamless gaming experience.
@@ -9,8 +9,19 @@ Welcome to the Tic-Tac-Toe game! This is a simple one and two-player game where 
 5) Easy Restart: Want to start a new game? No problem! A retry button allows you to quickly clear the board and begin a brand-new match!
 6) AI performance statistics: Want to show off your wins against the AI? Fret not, there's a statistic board that showcases your results!
 
-# Technologies Used
+## How To Use
+1. Clone this repository.
+2. Download MSYS2 (https://www.msys2.org/).
+3. Run MSYS2 application and enter the following command:
+   pacman -S mingw-w64-ucrt-x86_64-gcc
+4. Compile the program using a C compiler/in the terminal:
+   gcc -o actualmain actualmain.c -LC:\\msys64\\mingw64\\lib -lraylib
+5. Run the program:
+   ./actualmain
+6. Enjoy!
+
+## Technologies Used
 C programming using Raylib for GUI
 
-# Demo
+## Demo
 Check out a live demo of this Tic-Tac-Toe game _here_.
