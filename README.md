@@ -8,6 +8,7 @@ Welcome to the Tic-Tac-Toe game! This is a simple one and two-player game where 
 4) Winning announcements: When a player wins the game, the game will announce the winner. It's not just about winning; it's about enjoying the thrill of victory!
 5) Easy rematch: Want to start a new game? No problem! A retry button allows you to quickly clear the board and begin a brand-new match!
 6) AI performance statistics: Want to show off your wins against the AI? Fret not, there's a statistic board that showcases your results!
+7) How to Play: New to Tic Tac Toe? Don't worry, this simple set of instructions will easily get you started!
 
 ## How To Use
 1. Clone this repository.
